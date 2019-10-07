@@ -1,0 +1,558 @@
+---
+title: "Airbnb"
+author: "Huiwen Duan"
+date: "3/6/2019"
+output: html_document
+---
+### Read summary data
+```{r}
+reviews <- read.csv("/Users/pan/Desktop/Winter 2019/Stats 140SL/HW/final_project/reviews.csv")
+neighbourhoods <- read.csv("/Users/pan/Desktop/Winter 2019/Stats 140SL/HW/final_project/neighbourhoods.csv")
+listings <- read.csv("/Users/pan/Desktop/Winter 2019/Stats 140SL/HW/final_project/listings.csv")
+
+listingsFull <- read.csv("/Users/pan/Desktop/Winter 2019/Stats 140SL/HW/final_project/listingsFull.csv")
+reviewsFull <- read.csv("/Users/pan/Desktop/Winter 2019/Stats 140SL/HW/final_project/reviewsFull.csv")
+calendarFull <- read.csv("/Users/pan/Desktop/Winter 2019/Stats 140SL/HW/final_project/calendarFull.csv")
+```
+
+### Exploratory analysis
+```{r}
+# What do these datasets look like?
+dim(listings)
+str(listings)
+summary(listings)
+dim(reviews)
+str(reviews)
+summary(reviews)
+dim(neighbourhoods)
+str(neighbourhoods)
+summary(neighbourhoods)
+```
+#### superhost versus score rating 
+```{r}
+bined_2<-rating %>% group_by(host_is_superhost) %>%summarise(count=n(),mean_rating=mean(review_scores_rating,na.rm = TRUE))
+bined_2<-bined_2[2:3,]
+
+ggplot(data = bined_2,aes(x = host_is_superhost,y = mean_rating))+geom_point(size = 10)+geom_line()+ylim(90,100)
+```
+#### Price Overview
+```{r}
+library(ggplot2)
+library(dplyr)
+
+summary(listings$price)
+
+palette_1_colors <- c("#0DA3A0")
+
+# Less than $500 distribution
+priceGraph1 <- ggplot(listings[listings$price<500,], aes(price)) + 
+  geom_histogram(fill=palette_1_colors, bins=200) +
+  xlab("Price($)") + ylab("Count") +
+  scale_fill_manual(values=palette_1_colors) +
+  labs(x="Price($)", y="Count", title="Distribution of Airbnb Prices in Los Angeles")
+priceGraph1
+
+# More than 500 distribution
+priceGraph2 <- ggplot(listings[listings$price>500,], aes(price)) + 
+  geom_histogram(fill=palette_1_colors, bins=200) +
+  xlab("Price($)") + ylab("Count") +
+  scale_fill_manual(values=palette_1_colors) +
+  labs(x="Price($)", y="Count", title="Distribution of Airbnb Prices in Los Angeles")
+priceGraph2
+```
+
+#### Room types and Price
+```{r}
+sum(is.na(listings$price)) # No NA's in price column
+sum(is.na(listings$room_type)) # No NA's in room_type column
+unique(listings$room_type) # 3 room types
+numRT1 <- length(listings$room_type[listings$room_type==unique(listings$room_type)[1]]) # Entire home/apt listings number in LA
+numRT2 <- length(listings$room_type[listings$room_type==unique(listings$room_type)[2]]) # Private room listings number in LA
+numRT3 <- length(listings$room_type[listings$room_type==unique(listings$room_type)[3]]) # Shared room listings number in LA
+numRTVec <- c(numRT1, numRT2, numRT3)
+meanRT1 <- mean(listings[listings$room_type==unique(listings$room_type)[1], ]$price) # Entire home/apt average price in LA
+meanRT2 <- mean(listings[listings$room_type==unique(listings$room_type)[2], ]$price) # Private room average price in LA
+meanRT3 <- mean(listings[listings$room_type==unique(listings$room_type)[3], ]$price) # Shared room average price in LA
+meanRTVec <- c(meanRT1, meanRT2, meanRT3)
+RT.df <- data.frame(Room_Type=c("Entire home/apt", "Private room", "Shared room"), Number_of_Listings=numRTVec, Average_Price=meanRTVec)
+RT.df
+pie(numRTVec, labels=c("Entire home/apt = 62.40%", "Private room = 33.35%", "Shared room = 4.25%"), main="Room Type Distribution in LA")
+```
+```{r}
+listingsBigFive <- listings[listings$neighbourhood=="Culver City" | 
+          listings$neighbourhood=="Santa Monica" | 
+        listings$neighbourhood=="Downtown" |
+          listings$neighbourhood=="Compton" |
+          listings$neighbourhood=="Beverly Hills", ]
+listingsBigFive <- listingsBigFive[,c(6,9,10)]
+
+listingsBigFive
+
+numa <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Culver City" & listingsBigFive$room_type=="Entire home/apt",]$price)
+numb <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Culver City" & listingsBigFive$room_type=="Private room",]$price)
+numc <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Culver City" & listingsBigFive$room_type=="Shared room",]$price)
+
+numd <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Santa Monica" & listingsBigFive$room_type=="Entire home/apt",]$price)
+nume <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Santa Monica" & listingsBigFive$room_type=="Private room",]$price)
+numf <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Santa Monica" & listingsBigFive$room_type=="Shared room",]$price)
+
+numg <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Downtown" & listingsBigFive$room_type=="Entire home/apt",]$price)
+numh <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Downtown" & listingsBigFive$room_type=="Private room",]$price)
+numi <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Downtown" & listingsBigFive$room_type=="Shared room",]$price)
+
+numj <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Compton" & listingsBigFive$room_type=="Entire home/apt",]$price)
+numk <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Compton" & listingsBigFive$room_type=="Private room",]$price)
+numl <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Compton" & listingsBigFive$room_type=="Shared room",]$price)
+
+numm <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Beverly Hills" & listingsBigFive$room_type=="Entire home/apt",]$price)
+numn <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Beverly Hills" & listingsBigFive$room_type=="Private room",]$price)
+numo <- mean(listingsBigFive[listingsBigFive$neighbourhood=="Beverly Hills" & listingsBigFive$room_type=="Shared room",]$price)
+
+dfBigFivePrice <- data.frame(Neighborhood=c(rep("Culver City", 3), rep("Santa Monica", 3), rep("Downtown", 3), rep("Compton", 3), rep("Beverly Hills", 3)), Room_Type=rep(c("Entire home/apt", "Private room", "Shared room"), 5), Average_Price=c(numa,numb,numc,numd,nume,numf,numg,numh,numi,numj,numk,0,numm,numn,numo))
+dfBigFivePrice
+
+ggplot(dfBigFivePrice, aes(x=Neighborhood, y=Average_Price, fill = Room_Type)) +
+  geom_bar(position = "dodge",stat="identity") + xlab("Neighborhood") + ylab("Price")+
+  scale_fill_discrete(name = "Room Type") + 
+  ggtitle("Room Type Prices in Five LA Neighborhoods?",
+          subtitle = "Map showing Price of Listing Type by Neighborhood ") +
+          theme(plot.title = element_text(face = "bold")) +
+          theme(plot.subtitle = element_text(face = "bold", color = "grey35")) +
+          theme(plot.caption = element_text(color = "grey68"))+scale_color_gradient(low="#d3cbcb", high="#852eaa")+
+          scale_fill_manual("Property Type", values=c("#e06f69","#357b8a", "#7db5b8", "#59c6f3", "#f6c458")) +
+          xlab("Neighborhood") + ylab("Price")
+
+```
+
+#### Neighborhoods and Price
+```{r}
+length(unique(listings$neighbourhood))
+unique(listings$neighbourhood)
+neighbourhoodPriceVec <- rep(NA, length(unique(listings$neighbourhood)))
+for (i in 1:length(unique(listings$neighbourhood))) {
+  neighbourhoodPriceVec[i] <- mean(listings[listings$neighbourhood==unique(listings$neighbourhood)[i], ]$price)
+}
+neighbourhoodPriceDF <- data.frame(Neighborhood=unique(listings$neighbourhood), Average_Price=neighbourhoodPriceVec)
+neighbourhoodPriceDF
+plot(neighbourhoodPriceDF)
+
+neighbourhoodPriceDFOver500 <- neighbourhoodPriceDF[neighbourhoodPriceDF$Average_Price>500,]
+neighbourhoodPriceDFOver500
+plot(neighbourhoodPriceDF[neighbourhoodPriceDF$Average_Price>500,]$Neighborhood, neighbourhoodPriceDF[neighbourhoodPriceDF$Average_Price>500,]$Average_Price)
+```
+
+
+
+### Word Cloud
+```{r}
+splitnamecoloumn <- unlist(strsplit(as.character(listings$name), split=" "))
+wordDF <- data.frame("word" = splitnamecoloumn)
+wordDF <- wordDF %>% count(word, sort = TRUE) %>% 
+  ungroup()
+
+library("tm")
+docs <- Corpus(VectorSource(splitnamecoloumn)) 
+docs <- tm_map(docs, content_transformer(tolower))
+docs = tm_map(docs,removePunctuation)
+docs <- tm_map(docs, removeWords, c("in", "with", "&", "to", "the", "of", "and", "1", "2", " "))
+newcorpusdf <- data.frame(text=sapply(docs, identity), 
+    stringsAsFactors=F)
+newcorpusdffiltered <- newcorpusdf %>% filter(text != "")
+wordDF <- newcorpusdffiltered %>% count(text, sort = TRUE) %>% 
+  ungroup()
+library(RColorBrewer)
+# install.packages("wordcloud")
+library(wordcloud)
+set.seed(789)
+wordcloud(words = wordDF$text, 
+          freq = wordDF$n,
+          min.freq = 1000
+          max.words=500, colors = c("#e06f69","#357b8a", "#7db5b8", "#59c6f3"))
+```
+
+```{r}
+listings <- read.csv("listings.csv")
+listingsFULL <- read.csv("listingsFULL.csv")
+```
+```{r}
+head(listings)
+head(listingsFULL)
+listingsFULL <- listingsFULL[listingsFULL$market == "Los Angeles", ]
+```
+
+clean data first --> get LA  --> check
+mean prices of LA airbnb
+median prices or LA airbnb
+total number of airbnbs in LA
+number of airbnbs by neighbourhood
+10 neighbourhood with highest number of airbnbs
+
+number of airbnbs with different room_type
+mean price of each room_type
+median price of each room_type
+
+
+number of airbnbs with different property_type
+mean price of each property_type
+median price of each property_type
+
+mean prices of LA airbnb
+```{r}
+p <- substring(listingsFULL$price, 2) %>% as.numeric()
+p2 <- na.omit(p)
+mean(p2)
+#$144.2907
+```
+
+median prices of LA airbnb
+```{r}
+median(p2)
+#$100
+```
+
+total number of airbnbs in LA
+```{r}
+length(unique(listingsFULL$id))
+#41938
+```
+
+number of airbnbs by neighbourhood
+```{r}
+lst0 <- listingsFULL %>% group_by(host_neighbourhood) %>% summarise_all(funs(n = n()))
+lst0[order(-lst0$id_n), c(1,2)]
+#The data frame contains county names and corresponding number of airbnbs in them.
+```
+
+10 neighbourhood with highest number of airbnbs
+```{r}
+lst2 <- lst0[order(-lst0$id_n), c(1,2)]
+lst2[1:11, ]
+#Top ten counties with the most airbnbs.
+```
+
+number of airbnbs with different room_type
+```{r}
+listingsFULL %>% group_by(room_type) %>% summarise_all(funs(n = n()))
+#Entire home/apt --> 26276
+#Private room --> 13834
+#Shared room --> 1828
+```
+
+number of airbnbs with different property_type
+```{r}
+lst <- listingsFULL %>% group_by(property_type) %>% summarise_all(funs(n = n()))
+lst[ , c(1,2)]
+#The data frame contains property type and corresponding number of this type of airbnb.
+```
+
+The mean price for different room_type.
+```{r}
+lst4 <- listingsFULL
+lst4$price <- substring(listingsFULL$price, 2) %>% as.numeric()
+lst6 <- lst4[complete.cases(lst4$price), ]
+lst5 <- lst6 %>% group_by(room_type) %>% summarise_at("price", mean, na.rm = F)
+lst5
+```
+
+The top ten property_type that have the highest mean price.
+```{r}
+lst7 <- listingsFULL
+lst7$price <- substring(listingsFULL$price, 2) %>% as.numeric()
+lst8 <- lst7[complete.cases(lst7$price), ]
+lst9 <- lst8 %>% group_by(property_type) %>% summarise_at("price", mean, na.rm = F)
+lst9[order(-lst9$price),]
+```
+Relationship between number of accommodates, number of bedrooms and price.
+```{r}
+library(scatterplot3d)
+lst10 <- listingsFULL
+lst10$price <- substring(listingsFULL$price, 2) %>% as.numeric()
+lst10$cleaning_fee <- substring(listingsFULL$cleaning_fee, 2) %>% as.numeric()
+
+scatterplot3d(lst10$accommodates, lst10$bedrooms, lst10$price, type = "h", lwd = 0.5, xlab = "accommodates", ylab = "bedrooms", zlab = "price", xlim = 1:10, ylim = 1:10)
+
+gn <- ggplot(lst10, aes(accommodates, price)) + geom_point() + geom_smooth()
+gn
+gnn <- ggplot(lst10, aes(bedrooms, price)) + geom_point() + geom_smooth()
+gnn
+
+#The number of accommodates may be one of the key factors people consider when they choose different types of rooms:
+gn1 <- ggplot(lst10, aes(accommodates, price)) + geom_point() + geom_smooth()
+gn1 + facet_wrap(~ room_type)
+```
+
+Relationship between length of description and review score rating for three types of rooms.
+```{r}
+library(gridExtra)
+ls <- listingsFULL
+for (i in 1:19556) {
+  ls$deslength[i] <- str_length(ls$description[i])
+}
+g2 <- ggplot(ls, aes(deslength, review_scores_rating)) + geom_point() + geom_smooth()
+g2 + facet_wrap(~ room_type)
+```
+### Leaflet Graph
+```{r}
+require(maptools)
+require(sp)
+require(RColorBrewer)
+listings <- read.csv("listings.csv")
+names(listings)
+```
+```{r}
+pn <- data.frame(aggregate(listings[, c(10,11)], list(listings$neighbourhood), mean))
+#summarise(pn)
+range(listings$longitude)
+range(listings$latitude)
+
+
+file <- "l.a. county neighborhood (v6).shp"
+la <- readShapePoly(file)
+plot(la)
+```
+```{r}
+la2 <- merge(la, pn, by.x="name", by.y="Group.1")
+p <- colorRampPalette(c("darkseagreen1", "mediumorchid4"))(8)
+palette(p)
+price <- la2$price
+summary(price)
+data_levels <- cut(price, c(0, 85, 115, 150, 170,200, 500, 1000,2500))
+
+```
+```{r}
+a <-plot(la2, col=as.numeric(data_levels), main="Average Price by Neighbourhood", lwd=0.0001,
+         xlim = c(-118.9,-117), ylim=c(33.7, 34.8))
+legend("bottomright", fill =p,
+       legend = c("$0-85", "$85-115", "$115-150", "$150-170", "$170-200", "$200-500", "$500-1000", "$1000-2500"))
+```
+
+```{r}
+listings2 <- read.csv("listingsFull.csv")
+#names(listings2)
+listings2$price <- as.integer(listings2$price)
+listings2$security_deposit <- as.integer(listings2$security_deposit)
+```
+```{r}
+sf <- data.frame(aggregate((listings2[,64] ), 
+                            list(listings2$neighbourhood), mean))
+#sf
+summary(sf)
+la4 <- merge(la, sf, by.x="name", by.y="Group.1")
+
+sp <- la4$x
+summary(sp)
+p3 <- colorRampPalette(c("seashell", "seagreen3"))(5)
+palette(p3)
+data_levels3 <- cut(price, c( 1, 30, 40, 50, 100, 200))
+#data_colors2 <- c("lightblue", "lightsalmon2", "indianred4", "red")
+```
+```{r}
+c <-plot(la3, col=as.numeric(data_levels), main="Average Security Deposit by Neighbourhood", lwd=0.0001,
+         xlim = c(-118.9,-117), ylim=c(33.7, 34.8))
+legend("bottomright", fill =p3,
+       legend = c("$1-30", "$30-40", "$40-50", "$50-100", "100-200"))
+```
+
+```{r}
+sq <- data.frame(aggregate((listings2[, c(56,57)]), 
+                            list(listings2$neighbourhood), mean))
+sq$bedPerRoom = sq$beds/sq$bedrooms
+summary(sq)
+la3 <- merge(la, sq, by.x="name", by.y="Group.1")
+
+bpr <- la3$bedPerRoom
+summary(bpr)
+p2 <- colorRampPalette(c("mistyrose", "lightsalmon3"))(6)
+palette(p2)
+data_levels2 <- cut(price, c(0, 1, 1.2, 1.3, 1.5, 2, 3))
+#data_colors2 <- c("lightblue", "lightsalmon2", "indianred4", "red")
+```
+```{r}
+b <-plot(la2, col=as.numeric(data_levels), main="Average Bed per Bedroom by Neighbourhood", lwd=0.0001,
+         xlim = c(-118.9,-117), ylim=c(33.7, 34.8))
+legend("bottomright", fill =p2,
+       legend = c("0-1", "1-1.2", "1.2-1.3", "1.3-1.5", "1.5-2", "2-3"))
+```
+
+### Location analysis 
+```{r}
+
+ibrary(dplyr)
+library(ggplot2)
+listing<- read.csv("listings.csv",stringsAsFactors = FALSE)
+
+names(listing)
+
+#full<- read.csv("reviewsFull.csv",stringsAsFactors = FALSE)
+plot(listing$minimum_nights~listing$price)
+l<-lm(listing$price~listing$minimum_nights)
+summary(l)
+x<- data.frame(listing$price, breaks=cut(listing$price,breaks = 5, labels=c("100","200","300","400","500")) )
+
+l2<-listing%>%filter(listing$neighbourhood %in% c("Beverly Hills","Compton","Santa Monica","Culver City","Downtown"))
+
+mnights<- listing%>%filter(listing$neighbourhood %in% c("Beverly Hills","Compton","Santa Monica","Culver City","Downtown"))%>%group_by(neighbourhood, room_type)%>%summarise(mean = mean(minimum_nights))
+
+
+
+listing%>%filter(listing$neighbourhood %in% c("Beverly Hills","Compton","Santa Monica","Culver City","Downtown"))%>%group_by(neighbourhood, room_type)%>%summarise(mean = mean(price))
+mnights
+ylim = (c(0,100))
+boxplot(l2$minimum_nights~l2$room_type,ylim = (c(0,10)))
+
+ggplot(mnights, aes(x=neighbourhood, y=mean, fill = room_type)) +
+  geom_bar(position = "dodge",stat="identity") + xlab("Neighborhood") + ylab("Minimum Nights")+
+  scale_fill_discrete(name = "Room Type")
+
+ggplot(mnights, aes(x=neighbourhood, y=mean, fill = room_type)) +
+  geom_bar(position = "dodge",stat="identity") + xlab("Neighborhood") + ylab("Minimum Nights")+
+  scale_fill_discrete(name = "Room Type")
+
+
+
+```{r}
+listings2 <- read.csv("~/Desktop/airbnb/listings2.csv")
+```
+
+### Superhost Analysis
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+install.packages("lubridate")
+library(lubridate)
+```
+
+```{r}
+#create a new variable for the host time(last_scraped - host_since) and select only variables of interests
+listings <- listings2 %>% mutate(last_scraped = ymd(last_scraped), host_since=ymd(host_since), host_time = round(as.numeric(difftime(last_scraped , host_since , units = c("days"))/365),1))%>% select(id, host_id, last_scraped, host_since,host_time, host_location, host_neighbourhood, host_has_profile_pic, host_identity_verified, host_is_superhost, host_response_rate,host_response_time, number_of_reviews, review_scores_communication,review_scores_rating,property_type,room_type,host_listings_count,review_scores_accuracy,instant_bookable,cancellation_policy)
+listings$host_response_rate = as.integer(gsub("%","",listings$host_response_rate))
+#combine distinct host ids
+superhost <- filter(listings,host_is_superhost =='t')
+notsuperhost <- filter(listings,host_is_superhost =='f')
+sumsuper <- superhost %>% distinct(host_id, .keep_all = TRUE)
+sumhost <- notsuperhost %>% distinct(host_id, .keep_all = TRUE)
+```
+
+```{r}
+#some data exploratory between superhosts and non-superhosts
+#number and percentage of superhosts
+nrow(sumsuper)
+nrow(sumsuper)/(nrow(sumsuper)+nrow(sumhost))
+#average host_time 
+mean(sumsuper$host_time)
+mean(sumhost$host_time)
+# average number of listings
+mean(sumsuper$host_listings_count)
+mean(sumhost$host_listings_count)
+# average response rate
+mean(sumsuper$host_response_rate,na.rm=TRUE)
+mean(sumhost$host_response_rate,na.rm=TRUE)
+# % identity_verified
+sum(sumsuper$host_identity_verified=='t')/nrow(sumsuper)
+sum(sumhost$host_identity_verified=='t')/nrow(sumhost)
+# % instant_bookable
+sum(sumsuper$instant_bookable=='t')/nrow(sumsuper)
+sum(sumhost$instant_bookable=='t')/nrow(sumhost)
+```
+
+```{r}
+sumsuper2 <- superhost %>% group_by(host_id) %>% summarise(reviews = sum(number_of_reviews)/n(), rating = sum(review_scores_rating)/n(), communication=sum(review_scores_communication)/n(), 
+accuracy=sum(review_scores_accuracy)/n())sumhost2 <- notsuperhost %>% group_by(host_id) %>% summarise(reviews = sum(number_of_reviews)/n(), rating = sum(review_scores_rating)/n(), communication=sum(review_scores_communication)/n(), accuracy=sum(review_scores_accuracy)/n())
+#average number of reviews
+mean(sumsuper2$reviews)
+mean(sumhost2$reviews)
+#average rating scores
+mean(sumsuper2$rating,na.rm=TRUE)
+mean(sumhost2$rating,na.rm=TRUE)
+#average communication scores
+mean(sumsuper2$communication,na.rm=TRUE)
+mean(sumhost2$communication,na.rm=TRUE)
+#average accuracy scores
+mean(sumsuper2$accuracy,na.rm=TRUE)
+mean(sumhost2$accuracy,na.rm=TRUE)
+```
+
+```{r}
+#response time distribution
+responsetime <- listings %>% distinct(host_id, .keep_all = TRUE) %>% group_by(host_is_superhost) %>% summarise(within_an_hour=sum(host_response_time=='within an hour')/n(), within_a_few_hours=sum(host_response_time=='within a few hours')/n(), within_a_day=sum(host_response_time=='within a day')/n())
+responsetime <- responsetime[-1,]
+#some modifications for plot
+rtplot <- gather(responsetime, "response_time", "percent", 2:4) %>% mutate(percent = round(percent*100, 1)) %>% mutate(percentWeight = ifelse(percent >= 50, percent * 4.5, ifelse(percent < 50 & percent >= 10, percent * 3.5, 
+                                              ifelse(percent < 10 & percent >= 1, percent * 2.6, 1)))) %>% mutate(timeWeight = c(3,3,2,2,1,1)) %>% mutate(host_is_superhost = c("non-superhost","superhost","non-superhost","superhost","non-superhost","superhost"), percent=c("30.9%","66.5%","9.9%","12.1%","8.7%","4.0%"))
+ggplot(rtplot, aes(x = host_is_superhost, y = response_time,label = percent)) + 
+    geom_point(aes(size = percentWeight*2, colour = timeWeight)) + geom_text(hjust = 0.3, size = 3.5,colour="white") + scale_size(range = c(10, 45), guide = "none")  + scale_color_gradient(low = "rosybrown1", high = "indianred2")  +labs(title = "Response time of superhost and non-superhost") + theme(legend.title = element_blank(), plot.title = element_text(hjust = 0.5, size=13), axis.text.x = element_text(hjust=0.5, size=13), axis.text.y = element_text(hjust=0.5, size=13)) 
+```
+
+```{r}
+#cancellation policy distribution
+cp <- listings %>% distinct(host_id, .keep_all = TRUE) %>% group_by(host_is_superhost) %>% summarise(strict=sum(cancellation_policy == 'strict_14_with_grace_period')/n(), moderate=sum(cancellation_policy == 'moderate')/n(), flexible=sum(cancellation_policy == 'flexible')/n())
+cp <- cp[-1,]
+#some modifications for plot
+cpplot <- gather(cp, "cancellation_policy", "percent", 2:4) %>% mutate(percent = round(percent*100, 1)) %>% mutate(percentWeight = ifelse(percent >= 40, percent * 4.5, ifelse(percent < 40 & percent >= 30, percent * 3.5, 
+                                              ifelse(percent < 30 & percent >= 15, percent * 2.6, 1)))) %>% mutate(policyWeight = c(3,3,2,2,1,1)) %>% mutate(host_is_superhost = c("non-superhost","superhost","non-superhost","superhost","non-superhost","superhost"), percent=c("35.2%","37.1%","24.4%","44.3%","39.9%","18.4%"))
+ggplot(cpplot, aes(x = host_is_superhost, y = cancellation_policy, label = percent)) + 
+    geom_point(aes(size = percentWeight*2, colour = policyWeight)) + geom_text(hjust = 0.3, size = 3.5,colour="white") + scale_size(range = c(8, 40), guide = "none")  + scale_color_gradient(low = "rosybrown1", high = "indianred2")+labs(title = "Cancellation policy of superhost and non-superhost") + theme(legend.title = element_blank(), plot.title = element_text(hjust = 0.5, size=13), axis.text.x = element_text(hjust=0.5, size=13), axis.text.y = element_text(hjust=0.5, size=13))
+```
+```{r}
+#room type distribution
+roomtype <- listings %>% group_by(host_is_superhost) %>% 
+  summarise(entire = sum(room_type=='Entire home/apt')/n(),private = sum(room_type=='Private room')/n(),shared = sum(room_type=='Shared room')/n())
+roomtype <- roomtype[-1,]
+#some modifications for plot
+rplot <- gather(roomtype, "room_type", "percent", 2:4) %>% mutate(percent = round(percent*100, 1)) %>% mutate(percentWeight = ifelse(percent >= 60, percent * 4.5, ifelse(percent < 60 & percent >= 50, percent * 3.5, 
+                                              ifelse(percent < 50 & percent >= 30, percent * 2.6, 1)))) %>% mutate(policyWeight = c(3,3,2,2,1,1)) %>% mutate(host_is_superhost = c("non-superhost","superhost","non-superhost","superhost","non-superhost","superhost"), percent=c("60.5%","67.1%","34.0%","31.6%","5.5%","1.2%"))
+ggplot(rplot, aes(x = host_is_superhost, y = room_type, label = percent)) + 
+    geom_point(aes(size = percentWeight*2, colour = policyWeight)) + geom_text(hjust = 0.3, size = 3.5,colour="white") + scale_size(range = c(8, 40), guide = "none")  + scale_color_gradient(low = "rosybrown1", high = "indianred2")+labs(title = "Room type of superhost and non-superhost properties") + theme(legend.title = element_blank(), plot.title = element_text(hjust = 0.5, size=13), axis.text.x = element_text(hjust=0.5, size=13), axis.text.y = element_text(hjust=0.5, size=13))
+```
+
+
+### Relative Occupancy Rate and leaflet plot)
+### heat map of availability
+```{r}
+calendar <- calendar %>% mutate(booked = ifelse(available=="f", 1, 0))
+groupedCalendar <- calendar %>% group_by(date = date) %>% summarise(totalBooked = sum(booked, na.rm = TRUE), totalListings = n()) %>% mutate(percent_booked = (totalBooked/totalListings)*100)
+calendarHeat(groupedCalendar$date, groupedCalendar$percent_booked, ncolors = 100, color = "g2r", varname="Occupancy (Percentage) by Month")
+```
+### Leaflet
+```{r}
+LADF <- listings %>% select(neighbourhood,latitude,longitude) %>% group_by(neighbourhood) %>% summarise(latitude=round(mean(latitude),digits = 13),longitude=round(mean(longitude),digits = 13)) %>% as.data.frame()
+maps<-listings %>% group_by(neighbourhood) %>% summarise(meanPrice=round(mean(price),digits = 2),num = n_distinct(neighbourhood)) %>% as.data.frame()
+Maps <- inner_join(maps, LADF, by="neighbourhood")
+LA <- leaflet() %>% addTiles() %>% 
+  setView(lat = 34.0522, lng = -118.2437 , zoom = 10) %>%
+  addMarkers(data = Maps, lng = ~longitude, lat = ~latitude, popup = as.character(Maps$meanPrice)) %>%
+  addCircleMarkers(data = Maps, lng = ~longitude, lat = ~latitude, radius = 10, popup = as.character(Maps$num))
+LA
+```
+
+### Initial Data Analysis 
+```{r}
+library(ggplot2)
+listings<-read.csv("Desktop/140SL Final Project/listings.csv")
+reviews<-read.csv("Desktop/140SL Final Project/reviews.csv")
+d<-listings[!duplicated(listings$id),]
+head(listings)
+full_listings<-read.csv("Desktop/140SL Final Project/listings 2.csv")
+variable.names(full_listings)
+table(full_listings$review_scores_rating)
+```
+
+```{r}
+table(reviews$date)
+listings[listings$id == 6931,]
+```
+#### price vs score rating 
+```{r}
+library(dplyr)
+rating<-full_listings[,c("id","host_is_superhost","experiences_offered","amenities","price","review_scores_rating")]
+rating$price<-gsub("\\$", "", rating$price)
+rating$price<-gsub("\\$", "", rating$price)
+rating$price<-as.numeric(gsub("\\,", "", rating$price))
+
+
+bined<-rating %>% group_by(review_scores_rating) %>% summarise(count=n(),mean_price=mean(price))
+bined
+
+ggplot(data = bined,aes(x = mean_price,y = review_scores_rating))+geom_point()+geom_smooth(method = lm,color= "red")
+```
